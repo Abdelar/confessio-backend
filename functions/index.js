@@ -6,11 +6,11 @@ admin.initializeApp();
 
 const app = express();
 
+const db = admin.firestore();
+
 // GET all posts
 app.get('/posts', (req, res, next) => {
-	admin
-		.firestore()
-		.collection('posts')
+	db.collection('posts')
 		.orderBy('createdAt', 'desc')
 		.get()
 		.then(querySnapshot => {
@@ -32,9 +32,7 @@ app.post('/post', (req, res, next) => {
 		...req.body,
 		createdAt: admin.firestore.Timestamp.now(),
 	};
-	admin
-		.firestore()
-		.collection('posts')
+	db.collection('posts')
 		.add(post)
 		.then(doc => {
 			res.json({
