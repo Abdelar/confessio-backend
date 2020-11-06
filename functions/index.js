@@ -34,7 +34,9 @@ app.get('/posts', (req, res, next) => {
 app.post('/post', (req, res, next) => {
 	const errors = validatePost(req, res);
 	if (errors) return errors;
-	if (tags && tags.length) {
+	const { body, tags, author } = req.body;
+	const post = { body, author: author ? author : 'Anonymous' };
+	if (tags && tags.length > 0) {
 		post = { ...post, tags };
 	}
 	db.collection('posts')
