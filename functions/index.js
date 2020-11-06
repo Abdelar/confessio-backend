@@ -80,12 +80,32 @@ app.get('/post/:id', (req, res, next) => {
 		});
 });
 
+// get posts by tag
+app.get('/posts/:tag', (req, res) => {
+	const tag = req.params.tag;
+	db.collection('posts')
+		.where('tags', 'array-contains', tag)
+		.get()
+		.then(querySnapshot => {
+			const posts = [];
+			querySnapshot.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
+			res.json(posts);
+		})
+		.catch(err => {
+			res.status(500).json({
+				error: 'an error occurred',
+			});
+		});
+});
+
+// capture any wild requests
 app.use((req, res, next) => {
 	return res.status(404).json({
 		error: 'Bad request',
 	});
 });
 
+// handle general errors
 app.use((err, req, res, next) => {
 	console.error(err.stack);
 	res.status(500).send('Something broke!');
