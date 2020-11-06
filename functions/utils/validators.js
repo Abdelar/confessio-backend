@@ -28,7 +28,8 @@ exports.validatePost = (req, res) => {
 			tags.some(tag => typeof tag !== 'string' || tag.length > 15))
 	) {
 		return res.status(400).json({
-			error: 'Too many tags or some tags are too long!',
+			error:
+				'Too many tags or some tags are too long!. Please Check also that the tags are of type string',
 		});
 	}
 	return null;

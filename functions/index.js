@@ -35,7 +35,11 @@ app.post('/post', (req, res, next) => {
 	const errors = validatePost(req, res);
 	if (errors) return errors;
 	const { body, tags, author } = req.body;
-	const post = { body, author: author ? author : 'Anonymous' };
+	let post = {
+		body,
+		createdAt: admin.firestore.Timestamp.now(),
+		author: author ? author : 'Anonymous',
+	};
 	if (tags && tags.length > 0) {
 		post = { ...post, tags };
 	}
