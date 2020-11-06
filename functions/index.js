@@ -1,7 +1,8 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
-import cors from 'cors';
+const cors = require('cors');
+const { validatePost } = require('./utils/validators');
 
 admin.initializeApp();
 
@@ -31,10 +32,11 @@ app.get('/posts', (req, res, next) => {
 
 // create a post
 app.post('/post', (req, res, next) => {
-	const post = {
-		...req.body,
-		createdAt: admin.firestore.Timestamp.now(),
-	};
+	const errors = validatePost(req, res);
+	if (errors) return errors;
+	if (tags && tags.length) {
+		post = { ...post, tags };
+	}
 	db.collection('posts')
 		.add(post)
 		.then(doc => {
@@ -48,6 +50,17 @@ app.post('/post', (req, res, next) => {
 				error: 'creating post failed',
 			});
 		});
+});
+
+app.use((req, res, next) => {
+	return res.status(404).json({
+		error: 'Bad request',
+	});
+});
+
+app.use((err, req, res, next) => {
+	console.error(err.stack);
+	res.status(500).send('Something broke!');
 });
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
