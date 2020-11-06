@@ -58,6 +58,28 @@ app.post('/post', (req, res, next) => {
 		});
 });
 
+// get one post
+app.get('/post/:id', (req, res, next) => {
+	const postId = req.params.id;
+	db.collection('posts')
+		.doc(postId)
+		.get()
+		.then(doc => {
+			if (doc.exists) {
+				res.json({ id: doc.id, ...doc.data() });
+			} else {
+				res.status(404).json({
+					error: 'No such document!',
+				});
+			}
+		})
+		.catch(err => {
+			res.status(500).json({
+				error: 'An error has occurred',
+			});
+		});
+});
+
 app.use((req, res, next) => {
 	return res.status(404).json({
 		error: 'Bad request',
