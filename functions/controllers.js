@@ -40,7 +40,6 @@ exports.createPost = (req, res, next) => {
 			return db.collection('posts').doc(doc.id).get();
 		})
 		.then(doc => {
-			console.log({ id: doc.id, ...doc.data() });
 			res.json({
 				id: doc.id,
 				...doc.data(),
@@ -69,6 +68,7 @@ exports.getOnePost = (req, res, next) => {
 			}
 		})
 		.catch(err => {
+			console.error(err);
 			res.status(500).json({
 				message: 'An error has occurred',
 			});
@@ -86,6 +86,7 @@ exports.getPostsByTag = (req, res) => {
 			res.json(posts);
 		})
 		.catch(err => {
+			console.error(err);
 			res.status(500).json({
 				message: 'an error occurred',
 			});
