@@ -1,114 +1,35 @@
 const functions = require('firebase-functions');
-const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
-const { validatePost } = require('./utils/validators');
 
-admin.initializeApp();
+const {
+	getPosts,
+	createPost,
+	getOnePost,
+	getPostsByTag,
+	error404,
+	generalError,
+} = require('./controllers');
 
 const app = express();
-
 app.use(cors());
 
-const db = admin.firestore();
-
 // GET all posts
-app.get('/posts', (req, res, next) => {
-	db.collection('posts')
-		.orderBy('createdAt', 'desc')
-		.get()
-		.then(querySnapshot => {
-			const posts = [];
-			querySnapshot.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
-			res.json(posts);
-		})
-		.catch(err => {
-			console.error(err);
-			res.status(500).json({
-				error: 'unable to get posts',
-			});
-		});
-});
+app.get('/posts', getPosts);
 
 // create a post
-app.post('/post', (req, res, next) => {
-	const errors = validatePost(req, res);
-	if (errors) return errors;
-	const { body, tags, author } = req.body;
-	let post = {
-		body,
-		createdAt: admin.firestore.Timestamp.now(),
-		author: author ? author : 'Anonymous',
-	};
-	if (tags && tags.length > 0) {
-		post = { ...post, tags };
-	}
-	db.collection('posts')
-		.add(post)
-		.then(doc => {
-			res.json({
-				message: `document ${doc.id} created successfully`,
-			});
-		})
-		.catch(err => {
-			console.error(err);
-			res.status(500).json({
-				error: 'creating post failed',
-			});
-		});
-});
+app.post('/post', createPost);
 
 // get one post
-app.get('/post/:id', (req, res, next) => {
-	const postId = req.params.id;
-	db.collection('posts')
-		.doc(postId)
-		.get()
-		.then(doc => {
-			if (doc.exists) {
-				res.json({ id: doc.id, ...doc.data() });
-			} else {
-				res.status(404).json({
-					error: 'No such document!',
-				});
-			}
-		})
-		.catch(err => {
-			res.status(500).json({
-				error: 'An error has occurred',
-			});
-		});
-});
+app.get('/post/:id', getOnePost);
 
 // get posts by tag
-app.get('/posts/:tag', (req, res) => {
-	const tag = req.params.tag;
-	db.collection('posts')
-		.where('tags', 'array-contains', tag)
-		.get()
-		.then(querySnapshot => {
-			const posts = [];
-			querySnapshot.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
-			res.json(posts);
-		})
-		.catch(err => {
-			res.status(500).json({
-				error: 'an error occurred',
-			});
-		});
-});
+app.get('/posts/:tag', getPostsByTag);
 
 // capture any wild requests
-app.use((req, res, next) => {
-	return res.status(404).json({
-		error: 'Bad request',
-	});
-});
+app.use(error404);
 
 // handle general errors
-app.use((err, req, res, next) => {
-	console.error(err.stack);
-	res.status(500).send('Something broke!');
-});
+app.use(generalError);
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
