@@ -5,21 +5,32 @@ const { validatePost } = require('./utils/validators');
 admin.initializeApp();
 const db = admin.firestore();
 
-exports.getPosts = (req, res, next) => {
-	db.collection('posts')
-		.orderBy('createdAt', 'desc')
-		.get()
-		.then(querySnapshot => {
-			const posts = [];
-			querySnapshot.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
-			res.json(posts);
-		})
-		.catch(err => {
-			console.error(err);
-			res.status(500).json({
-				message: 'unable to get posts',
-			});
+const perPage = 3;
+
+exports.getPosts = async (req, res, next) => {
+	const last = req.query.last;
+	try {
+		let startAfterSnapshot = db
+			.collection('posts')
+			.orderBy('createdAt', 'desc');
+		if (last) {
+			lastDoc = await db.collection('posts').doc(last).get();
+			startAfterSnapshot = db
+				.collection('posts')
+				.orderBy('createdAt', 'desc')
+				.startAfter(lastDoc);
+		}
+
+		const docs = await startAfterSnapshot.limit(perPage).get();
+		const posts = [];
+		docs.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
+		res.json(posts);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({
+			message: error.message,
 		});
+	}
 };
 
 exports.createPost = (req, res, next) => {
@@ -105,3 +116,13 @@ exports.generalError = (err, req, res, next) => {
 		message: 'Something broke!',
 	});
 };
+
+// const docRef = db.collection('posts').doc(req.query.last);
+// const snapshot = await docRef.get();
+// const startAtSnapshot = db
+// 	.collection('posts')
+// 	.orderBy('createdAt', 'desc')
+// 	.startAt(snapshot);
+
+// const docs = await startAtSnapshot.limit(perPage).get();
+// const posts = docs.map();
