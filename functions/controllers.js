@@ -5,7 +5,7 @@ const { validatePost } = require('./utils/validators');
 admin.initializeApp();
 const db = admin.firestore();
 
-const perPage = 3;
+const perPage = 12;
 
 exports.getPosts = async (req, res, next) => {
 	const last = req.query.last;
